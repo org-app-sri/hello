@@ -1,0 +1,43 @@
+- hosts: nginxservers
+  become: true
+  tasks:
+  - name: install java
+    yum:
+      name: java-1.8.0-openjdk
+      state: present
+  - name: Download jenkins by repo
+    get_url:
+      url:  https://pkg.jenkins.io/redhat/jenkins.repo
+      dest: /etc/yum.repos.d/jenkins.repo
+  - name: import jenkins key
+    rpm_key:
+      state: present
+      key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: Install Epal repo
+    yum:
+      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      state: present
+      disable_gpg_check: true
+  - name: installing  jenkins
+    yum:
+      name: jenkins
+      state: present
+  - name: Enable jenkins
+    systemd:
+      name: jenkins
+      enabled: true
+  - name: start jenkins server
+    service:
+      name: jenkins
+      state: started
+  - name: sleep  for 30 seconds and continue
+    wait_for:
+      delay: 30
+      port: 8080
+  - name: Get initial admin password
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: jenkinspass
+  - name: print jenkins password
+    debug:
+       var: jenkinspass.stdout
+~
